@@ -45,12 +45,12 @@ if __name__ == "__main__":
         sys.exit(1)
    
     try:
-        # rotating snapshots 
-        rotate(archive, upto=1)
+        # rotate snapshots, from the oldest upto the one with suffix 1 
+        archive.shift(upto=1)
 
-        # make a hard-link-only copy of the latest snapshot 
-        # or create dir.0 if it doesn't exist
-        hardlink(archive.dir(0), archive.dir(1), create=True)
+        # make a hard-link-only copy of the latest snapshot
+        if archive.exists(0):
+            hardlink(archive.dir(0), archive.dir(1))
 
         # rsync from the system into the latest snapshot 
         rsync(source, archive.dir(0), exclude)

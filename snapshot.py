@@ -11,6 +11,10 @@ from subprocess import call
 import os, sys
 
 #-------------------------------------------------------------------------------
+class ToolError(Exception):
+    pass
+
+#-------------------------------------------------------------------------------
 class SnapshotArchive:
     def __init__(self, base, name="snapshot", count=3):
         self.base = base
@@ -20,9 +24,26 @@ class SnapshotArchive:
     def dir(self, suffix):
         return "%s/%s.%d" % (self.base, self.name, suffix)
 
-#-------------------------------------------------------------------------------
-class ToolError(Exception):
-    pass
+    def exists(self, suffix):
+         return os.path.isdir(self.dir(suffix))
+
+    #def create(self, suffix):
+    #    if call(["mkdir", "-p", self.dir(suffix)]) != 0:
+    #        raise ToolError("create: mkdir failed")
+
+    def shift(self, upto=0):
+        oldest = self.count - 1
+        
+        # step 1: delete the oldest snapshot, if it exists:
+        if self.exists(oldest):
+            if call(['rm', '-rf', self.dir(oldest)]) != 0:
+                raise ToolError("shift: rm failed")
+
+        # step 2: shift the middle snapshot(s) back by one, it they exist
+        for x in range(oldest, upto, -1):
+            if self.exists(x-1):
+                if call(['mv', self.dir(x-1), self.dir(x)]) != 0:
+                    raise ToolError("shift: mv failed")
 
 #-------------------------------------------------------------------------------
 def errmsg(*args, **kargs):
@@ -30,32 +51,10 @@ def errmsg(*args, **kargs):
     print(*args, file=sys.stderr, **kargs)
 
 #-------------------------------------------------------------------------------
-def rotate(archive, upto=0):
-    oldest = archive.count - 1
-    
-    # step 1: delete the oldest snapshot, if it exists:
-    if os.path.isdir(archive.dir(oldest)):
-        if call(["rm", "-rf", archive.dir(oldest)]) != 0:
-            raise ToolError("rotate: rm failed")
-
-    # step 2: shift the middle snapshot(s) back by one, it they exist
-    for x in range(oldest, upto, -1):
-        if os.path.isdir(archive.dir(x-1)):
-            if call(["mv", archive.dir(x-1), archive.dir(x)]) != 0:
-                raise ToolError("rotate: mv failed")
-
-    return True
-
-#-------------------------------------------------------------------------------
-def hardlink(source, dest, create=False):
-    # step 3: make a hard-link-only (except for dirs) 
-    # copy of the latest snapshot
-    if os.path.isdir(source):
-        if call(["cp", "-al", source, dest]) != 0:
-            raise ToolError("hardlink: cp failed")
-    elif create:
-        if call(["mkdir", "-p", source]) != 0:
-            raise ToolError("hardlink: mkdir failed")
+def hardlink(source, dest):
+    # step 3: make a hard-link-only copy of the source
+    if call(["cp", "-al", source, dest]) != 0:
+        raise ToolError("hardlink: cp failed")
 
 #-------------------------------------------------------------------------------
 def rsync(source, dest, exclude=[]):
@@ -77,7 +76,7 @@ def rsync(source, dest, exclude=[]):
 
 #-------------------------------------------------------------------------------
 if __name__ == "__main__":
-    source = [ os.environ["HOME"] ] 
+    source = [ os.environ["HOME"] + '/bin' ] 
     archive = SnapshotArchive("/tmp", name="daily", count=10)
 
     # make sure we're running as root
@@ -92,10 +91,13 @@ if __name__ == "__main__":
 
     # make a snapshot
     try:
-        # rotating snapshots 
-        rotate(archive, upto=1)
+        # rotate snapshots, from the oldest upto the one with suffix 1 
+        archive.shift(upto=1)
+
         # make a hard-link-only copy of the latest snapshot
-        hardlink(archive.dir(0), archive.dir(1), create=True)
+        if archive.exists(0):
+            hardlink(archive.dir(0), archive.dir(1))
+
         # rsync from the system into the latest snapshot 
         rsync(source, archive.dir(0))
 
