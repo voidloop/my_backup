@@ -1,4 +1,6 @@
-from archive import Backup, SudoMount, Mount
+#!/usr/bin/python3
+
+from archive import Backup, SudoMount
 from pydbus import SessionBus
 import os
 import time
