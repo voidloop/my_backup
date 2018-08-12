@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     try:
         with SudoMount(device, dest):
-            backup = Backup(source, dest, exclude=exclude)
+            backup = Backup(source, dest, exclude=exclude, maxcount=20)
 
             notify('Backup started')
             time_start = time.time()
