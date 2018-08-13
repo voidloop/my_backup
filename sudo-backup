@@ -1,0 +1,3 @@
+## Allow user exp to mount the backup disk image file
+exp ALL=NOPASSWD:/bin/mount UUID=4d29d023-ed3a-40d7-8855-f63c1ec803ce /home/exp/.backup/backupdisk.d, NOPASSWD:/bin/umount /home/exp/.backup/backupdisk.d
+
