@@ -1,18 +1,14 @@
 #!/usr/bin/python3
 from backup import SnapshotBackup, SudoMount, Archive
-from gi.overrides import GLib
 from pydbus import SessionBus
 import os
 import time
 
 
 def notify(message):
-    try:
-        bus = SessionBus()
-        notifier = bus.get(".Notifications")
-        notifier.Notify("home.py", 0, "", "My backup", message, "", "", 10000)
-    except GLib.Error:
-        pass
+    bus = SessionBus()
+    notifier = bus.get(".Notifications")
+    notifier.Notify("home.py", 0, "", "My backup", message, "", "", 10000)
 
 
 if __name__ == '__main__':
@@ -39,6 +35,3 @@ if __name__ == '__main__':
     except Exception:
         notify('Backup failed!')
         raise
-
-
-
