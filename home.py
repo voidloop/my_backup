@@ -1,14 +1,18 @@
 #!/usr/bin/python3
 from backup import SnapshotBackup, SudoMount, Archive
+from gi.repository import GLib
 from pydbus import SessionBus
 import os
 import time
 
 
 def notify(message):
-    bus = SessionBus()
-    notifier = bus.get(".Notifications")
-    notifier.Notify("home.py", 0, "", "My backup", message, "", "", 10000)
+    try:
+        bus = SessionBus()
+        notifier = bus.get(".Notifications")
+        notifier.Notify("home.py", 0, "", "My backup", message, "", "", 10000)
+    except GLib.Error:
+        pass
 
 
 if __name__ == '__main__':
