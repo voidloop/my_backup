@@ -15,7 +15,7 @@ def notify(message):
         pass
 
 
-if __name__ == '__main__':
+def main():
     home = os.environ['HOME']
     device = 'UUID=4d29d023-ed3a-40d7-8855-f63c1ec803ce'
     dest = home + '/.backup/backupdisk.d'
@@ -39,3 +39,7 @@ if __name__ == '__main__':
     except Exception:
         notify('Backup failed!')
         raise
+
+
+if __name__ == '__main__':
+    main()
